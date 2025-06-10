@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Horas Extras</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <link rel="manifest" href="manifest.json">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Horas Extras">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png">
+
+    <meta name="theme-color" content="#2196F3"/>
+</head>
+<body>
+    <header>
+        <h1>Control y Reporte de Horas Extras</h1>
+    </header>
+
+    <main>
+        <section id="form-section">
+            <h2>Registrar Novedad</h2>
+            <form id="horas-extras-form">
+                <div class="form-group">
+                    <label for="quienRegistra">¿QUIÉN REGISTRA LA NOVEDAD?</label>
+                    <select id="quienRegistra" required>
+                        <option value="">Seleccione...</option>
+                        <option value="Orlai Westreyther Flores - Coordinador Zona Centro y Sur">Orlai Westreyther Flores - Coordinador Zona Centro y Sur</option>
+                        <option value="David Valencia Chinchaoy - Coordinador Zona Norte">David Valencia Chinchaoy - Coordinador Zona Norte</option>
+                        <option value="Nestor Jose Lopez Peraza - Supervisor Centros de Armado">Nestor Jose Lopez Peraza - Supervisor Centros de Armado</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="dniCe">DNI/CE</label>
+                    <input type="text" id="dniCe" list="dni-list" placeholder="Empieza a escribir el DNI/CE..." required>
+                    <datalist id="dni-list"></datalist>
+                </div>
+
+                <div class="form-group">
+                    <label for="apellidosNombres">APELLIDOS Y NOMBRES</label>
+                    <input type="text" id="apellidosNombres" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label for="codigo">CÓDIGO</label>
+                    <input type="text" id="codigo" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label for="puesto">PUESTO</label>
+                    <input type="text" id="puesto" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label for="fecha">Fecha</label>
+                    <input type="date" id="fecha" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="ingreso">INGRESO (Hora de inicio de la hora extra)</label>
+                    <input type="time" id="ingreso" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="salida">SALIDA (Hora de fin de la hora extra)</label>
+                    <input type="time" id="salida" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="observacion">OBSERVACIÓN DE LA NOVEDAD</label>
+                    <textarea id="observacion" rows="3"></textarea>
+                </div>
+
+                <button type="submit" id="submit-btn">Registrar Hora Extra</button>
+            </form>
+        </section>
+
+        <section id="report-section">
+            <h2>Reporte de Horas Extras</h2>
+            <p>Aquí se mostrarán las horas extras registradas.</p>
+            <div class="button-group"> <button id="descargarHorasExtrasBtn">Descargar Informe CSV</button>
+                <button id="borrarRegistrosBtn" class="reset-button">Borrar Todos los Registros</button> </div>
+
+            <div class="table-container">
+                <table id="horas-extras-table">
+                    <thead>
+                        <tr>
+                            <th>Quién Registra</th>
+                            <th>DNI/CE</th>
+                            <th>Apellidos y Nombres</th>
+                            <th>Código</th>
+                            <th>Puesto</th>
+                            <th>Fecha</th>
+                            <th>Ingreso</th>
+                            <th>Salida</th>
+                            <th>Observación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 App Horas Extras</p>
+    </footer>
+
+    <script src="js/helpers.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
