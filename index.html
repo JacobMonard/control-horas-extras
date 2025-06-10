@@ -5,15 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>App Horas Extras</title>
 
+    <!-- Enlace al archivo CSS principal -->
     <link rel="stylesheet" href="css/style.css">
 
+    <!-- Configuración del Manifiesto de la PWA -->
     <link rel="manifest" href="manifest.json">
 
+    <!-- Configuración de metadatos para "añadir a pantalla de inicio" (iOS / Android) -->
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Horas Extras">
     <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png">
 
+    <!-- Theme color para la barra de dirección del navegador -->
     <meta name="theme-color" content="#2196F3"/>
 </head>
 <body>
@@ -22,28 +27,28 @@
     </header>
 
     <main>
-        <section id="form-section">
+        <section id="register-section">
             <h2>Registrar Novedad</h2>
             <form id="horas-extras-form">
                 <div class="form-group">
                     <label for="quienRegistra">¿QUIÉN REGISTRA LA NOVEDAD?</label>
                     <select id="quienRegistra" required>
                         <option value="">Seleccione...</option>
-                        <option value="Orlai Westreyther Flores - Coordinador Zona Centro y Sur">Orlai Westreyther Flores - Coordinador Zona Centro y Sur</option>
-                        <option value="David Valencia Chinchaoy - Coordinador Zona Norte">David Valencia Chinchaoy - Coordinador Zona Norte</option>
-                        <option value="Nestor Jose Lopez Peraza - Supervisor Centros de Armado">Nestor Jose Lopez Peraza - Supervisor Centros de Armado</option>
+                        <!-- Opciones se cargarán dinámicamente desde app.js -->
                     </select>
                 </div>
 
+                <!-- CAMPO DE BÚSQUEDA PRINCIPAL: APELLIDOS Y NOMBRES -->
                 <div class="form-group">
-                    <label for="dniCe">DNI/CE</label>
-                    <input type="text" id="dniCe" list="dni-list" placeholder="Empieza a escribir el DNI/CE..." required>
-                    <datalist id="dni-list"></datalist>
+                    <label for="apellidosNombresInputSearch">APELLIDOS Y NOMBRES</label>
+                    <input type="text" id="apellidosNombresInputSearch" list="nombres-list" placeholder="Empieza a escribir los Apellidos y Nombres del trabajador..." required>
+                    <datalist id="nombres-list"></datalist>
                 </div>
 
+                <!-- CAMPOS QUE SE AUTOGENERAN -->
                 <div class="form-group">
-                    <label for="apellidosNombres">APELLIDOS Y NOMBRES</label>
-                    <input type="text" id="apellidosNombres" readonly>
+                    <label for="dniCe">DNI/CE</label>
+                    <input type="text" id="dniCe" readonly>
                 </div>
 
                 <div class="form-group">
@@ -56,36 +61,38 @@
                     <input type="text" id="puesto" readonly>
                 </div>
 
+                <!-- CAMPOS DE FECHA Y HORA -->
                 <div class="form-group">
-                    <label for="fecha">Fecha</label>
-                    <input type="date" id="fecha" required>
+                    <label for="fechaIngreso">FECHA DE INGRESO (Inicio de la hora extra)</label>
+                    <input type="date" id="fechaIngreso" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="ingreso">INGRESO (Hora de inicio de la hora extra)</label>
+                    <label for="ingreso">HORA DE INGRESO</label>
                     <input type="time" id="ingreso" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="salida">SALIDA (Hora de fin de la hora extra)</label>
+                    <label for="fechaSalida">FECHA DE SALIDA (Fin de la hora extra)</label>
+                    <input type="date" id="fechaSalida" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="salida">HORA DE SALIDA</label>
                     <input type="time" id="salida" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="observacion">OBSERVACIÓN DE LA NOVEDAD</label>
-                    <textarea id="observacion" rows="3"></textarea>
+                    <label for="observacion">OBSERVACIÓN (Opcional)</label>
+                    <textarea id="observacion" rows="3" placeholder="Detalles adicionales sobre la novedad..."></textarea>
                 </div>
 
-                <button type="submit" id="submit-btn">Registrar Hora Extra</button>
+                <button type="submit">Registrar Novedad</button>
             </form>
         </section>
 
         <section id="report-section">
             <h2>Reporte de Horas Extras</h2>
-            <p>Aquí se mostrarán las horas extras registradas.</p>
-            <div class="button-group"> <button id="descargarHorasExtrasBtn">Descargar Informe CSV</button>
-                <button id="borrarRegistrosBtn" class="reset-button">Borrar Todos los Registros</button> </div>
-
             <div class="table-container">
                 <table id="horas-extras-table">
                     <thead>
@@ -95,15 +102,23 @@
                             <th>Apellidos y Nombres</th>
                             <th>Código</th>
                             <th>Puesto</th>
-                            <th>Fecha</th>
-                            <th>Ingreso</th>
-                            <th>Salida</th>
+                            <th>Fecha Ingreso</th>
+                            <th>Hora Ingreso</th>
+                            <th>Fecha Salida</th>
+                            <th>Hora Salida</th>
                             <th>Observación</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        </tbody>
+                        <!-- Los registros se insertarán aquí por JavaScript -->
+                    </tbody>
                 </table>
+            </div>
+            <div class="button-group">
+                <!-- Cambiamos el texto del botón para reflejar que es un Excel -->
+                <button id="descargarHorasExtrasBtn">Descargar Informe Excel</button>
+                <button id="borrarRegistrosBtn" class="reset-button">Borrar Todos los Registros</button>
             </div>
         </section>
     </main>
@@ -112,7 +127,10 @@
         <p>&copy; 2025 App Horas Extras</p>
     </footer>
 
-    <script src="js/helpers.js"></script>
-    <script src="js/app.js"></script>
+    <!-- Script de la librería SheetJS para generar Excel (xlsx) -->
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <!-- Enlace a los archivos JavaScript de tu aplicación -->
+    <script type="module" src="js/helpers.js"></script>
+    <script type="module" src="js/app.js"></script>
 </body>
 </html>

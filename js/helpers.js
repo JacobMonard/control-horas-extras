@@ -1,149 +1,134 @@
 // js/helpers.js
 
 /**
- * Convierte un array de objetos JavaScript en una cadena de texto CSV.
- * @param {Array<Object>} data - Array de objetos a exportar.
- * @param {Array<string>} objectKeys - Las claves de los objetos que corresponden al orden de las columnas en el CSV.
- * @param {Array<string>} displayHeaders - Los nombres de las cabeceras a mostrar en el CSV.
- * @returns {string} La cadena de texto en formato CSV.
+ * Carga un archivo CSV desde una ruta especificada y lo parsea en un array de arrays.
+ * @param {string} url La URL del archivo CSV.
+ * @returns {Promise<Array<Array<string>>>} Una promesa que resuelve con los datos del CSV.
  */
-function convertToCSV(data, objectKeys, displayHeaders) {
-    if (!data || data.length === 0) {
-        return '';
-    }
-
-    if (!objectKeys || objectKeys.length === 0) {
-        console.error("convertToCSV: 'objectKeys' array is required.");
-        return '';
-    }
-    if (displayHeaders && displayHeaders.length !== objectKeys.length) {
-        console.warn("convertToCSV: Mismatch between 'objectKeys' and 'displayHeaders' length. Using 'objectKeys' for headers.");
-        displayHeaders = objectKeys;
-    }
-
-    const finalHeadersForCSV = displayHeaders || objectKeys;
-
-    const escapeCsvValue = (value) => {
-        if (value === null || value === undefined) {
-            return '';
+export async function cargarCSV(url) {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-        let stringValue = String(value);
-        if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
-            stringValue = stringValue.replace(/"/g, '""');
-            return `"${stringValue}"`;
-        }
-        return stringValue;
-    };
-
-    const headerRow = finalHeadersForCSV.map(escapeCsvValue).join(',');
-
-    const dataRows = data.map(row => {
-        return objectKeys.map(key => escapeCsvValue(row[key])).join(',');
-    });
-
-    return [headerRow, ...dataRows].join('\n');
-}
-
-/**
- * Inicia la descarga de un archivo CSV en el navegador.
- * @param {string} csvContent - La cadena de texto CSV a descargar.
- * @param {string} filename - El nombre del archivo CSV.
- */
-function downloadCSV(csvContent, filename = 'reporte.csv') {
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
-/**
- * Función para parsear un archivo CSV en un array de objetos.
- * Asume que la primera fila son las cabeceras.
- * @param {string} csvText - El contenido del archivo CSV como texto.
- * @returns {Array<Object>} Un array de objetos, donde cada objeto es una fila.
- */
-function parseCSV(csvText) {
-    const lines = csvText.trim().split('\n');
-    if (lines.length === 0) return [];
-
-    // Identifica las cabeceras (primera fila) y las limpia
-    const headers = lines[0].split(',').map(header => header.trim());
-    const data = [];
-
-    for (let i = 1; i < lines.length; i++) {
-        const currentLine = lines[i];
-        if (!currentLine) continue; // Saltar líneas vacías o solo con espacios
-
-        const values = [];
-        let inQuote = false;
-        let currentField = '';
-
-        for (let j = 0; j < currentLine.length; j++) {
-            const char = currentLine[j];
-            if (char === '"') {
-                // Manejar comillas escapadas (doble comilla dentro de un campo entre comillas)
-                if (inQuote && currentLine[j + 1] === '"') {
-                    currentField += '"';
-                    j++; // Saltar la segunda comilla
-                } else {
-                    inQuote = !inQuote; // Alternar estado de comilla
-                }
-            } else if (char === ',' && !inQuote) {
-                values.push(currentField.trim());
-                currentField = '';
-            } else {
-                currentField += char;
-            }
-        }
-        values.push(currentField.trim()); // Añadir el último campo de la línea
-
-        // Pequeña validación para asegurar que la fila tenga el número esperado de columnas
-        if (values.length !== headers.length) {
-            console.warn(`Row ${i + 1} has ${values.length} columns, but expected ${headers.length}. Skipping or handling misalignment.`);
-            continue; // Saltar esta fila si no coincide con las cabeceras
-        }
-
-        const rowObject = {};
-        headers.forEach((header, index) => {
-            rowObject[header] = values[index];
+        const csvText = await response.text();
+        const lines = csvText.split('\n').filter(line => line.trim() !== ''); // Ignorar líneas vacías
+        const data = lines.map(line => {
+            // Un split simple por coma, asumiendo que no hay comas dentro de campos sin comillas.
+            return line.split(',');
         });
-        data.push(rowObject);
+
+        // Eliminar la fila de encabezado
+        return data.slice(1);
+
+    } catch (error) {
+        console.error('Error al cargar o parsear el CSV:', error);
+        throw error;
     }
-    return data;
 }
 
 /**
- * Guarda datos en localStorage.
- * @param {string} key - La clave para guardar los datos.
- * @param {any} data - Los datos a guardar. Se convertirán a JSON.
+ * Guarda datos en el localStorage.
+ * @param {string} key La clave bajo la cual se guardarán los datos.
+ * @param {any} data Los datos a guardar.
  */
-function saveDataToLocalStorage(key, data) {
+export function guardarDatos(key, data) {
     try {
         localStorage.setItem(key, JSON.stringify(data));
-        console.log(`Datos guardados en localStorage con la clave: ${key}`);
+        console.log(`Datos guardados en localStorage con clave: ${key}`);
     } catch (e) {
-        console.error(`Error al guardar en localStorage para la clave ${key}:`, e);
-        alert('Error al guardar datos. Puede que el almacenamiento esté lleno o el navegador no lo soporte.');
+        console.error(`Error al guardar datos en localStorage con clave ${key}:`, e);
+        alert('No se pudieron guardar los datos. El almacenamiento local puede estar lleno o deshabilitado.');
     }
 }
 
 /**
- * Carga datos desde localStorage.
- * @param {string} key - La clave para cargar los datos.
- * @returns {any} Los datos cargados, o null si no se encuentran o hay un error.
+ * Carga datos desde el localStorage.
+ * @param {string} key La clave de los datos a cargar.
+ * @returns {any | null} Los datos cargados, o null si no se encontraron.
  */
-function loadDataFromLocalStorage(key) {
+export function cargarDatos(key) {
     try {
         const data = localStorage.getItem(key);
         return data ? JSON.parse(data) : null;
     } catch (e) {
-        console.error(`Error al cargar desde localStorage para la clave ${key}:`, e);
+        console.error(`Error al cargar datos de localStorage con clave ${key}:`, e);
+        alert('No se pudieron cargar los datos desde el almacenamiento local.');
         return null;
+    }
+}
+
+/**
+ * Limpia la tabla de horas extras en el DOM.
+ */
+export function limpiarTabla() {
+    const tableBody = document.querySelector('#horas-extras-table tbody');
+    if (tableBody) {
+        tableBody.innerHTML = ''; // Elimina todas las filas existentes
+    }
+}
+
+/**
+ * Renderiza los registros de horas extras en la tabla HTML.
+ * @param {Array<Object>} horasExtrasArray El array de objetos de horas extras a renderizar.
+ */
+export function renderizarTablaHorasExtras(horasExtrasArray) {
+    const tableBody = document.querySelector('#horas-extras-table tbody');
+    if (!tableBody) {
+        console.error('No se encontró el tbody de la tabla #horas-extras-table.');
+        return;
+    }
+    limpiarTabla(); // Limpia la tabla antes de renderizar
+
+    if (horasExtrasArray && horasExtrasArray.length > 0) {
+        horasExtrasArray.forEach((registro, index) => {
+            const row = tableBody.insertRow();
+            row.dataset.index = index;
+
+            row.insertCell().textContent = registro.quienRegistra;
+            row.insertCell().textContent = registro.dniCe;
+            row.insertCell().textContent = registro.apellidosNombres;
+            row.insertCell().textContent = registro.codigo;
+            row.insertCell().textContent = registro.puesto;
+            row.insertCell().textContent = registro.fechaIngreso;
+            row.insertCell().textContent = registro.ingreso;
+            row.insertCell().textContent = registro.fechaSalida;
+            row.insertCell().textContent = registro.salida;
+            row.insertCell().textContent = registro.observacion;
+
+            // Celda de acciones (por ejemplo, para eliminar)
+            const actionsCell = row.insertCell();
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Eliminar';
+            deleteBtn.classList.add('delete-btn');
+            deleteBtn.addEventListener('click', () => {
+                if (confirm('¿Estás seguro de que deseas eliminar este registro?')) {
+                    const realIndex = horasExtrasArray.findIndex(item =>
+                        item.dniCe === registro.dniCe &&
+                        item.fechaIngreso === registro.fechaIngreso &&
+                        item.ingreso === registro.ingreso &&
+                        item.fechaSalida === registro.fechaSalida &&
+                        item.salida === registro.salida &&
+                        item.quienRegistra === registro.quienRegistra
+                    );
+                    if (realIndex > -1) {
+                        horasExtrasArray.splice(realIndex, 1);
+                        guardarDatos('horasExtrasData', horasExtrasArray);
+                        renderizarTablaHorasExtras(horasExtrasArray);
+                        alert('Registro eliminado.');
+                    } else {
+                        alert('Error: No se pudo encontrar el registro para eliminar.');
+                    }
+                }
+            });
+            actionsCell.appendChild(deleteBtn);
+        });
+    } else {
+        const row = tableBody.insertRow();
+        const cell = row.insertCell();
+        cell.colSpan = 11; // Ajustado para cubrir las nuevas columnas
+        cell.textContent = 'No hay registros de horas extras disponibles.';
+        cell.style.textAlign = 'center';
+        cell.style.fontStyle = 'italic';
     }
 }

@@ -1,228 +1,378 @@
 // js/app.js
 
-// --- 1. Registro del Service Worker (Va al inicio del archivo) ---
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-            .then(registration => {
-                console.log('Service Worker registrado con éxito:', registration);
-            })
-            .catch(error => {
-                console.error('Fallo el registro del Service Worker:', error);
-            });
-    });
-}
+// Importar funciones de helpers.js
+import { cargarCSV, guardarDatos, cargarDatos, limpiarTabla, renderizarTablaHorasExtras } from './helpers.js';
 
-// --- 2. Variables Globales y Referencias a Elementos del DOM ---
-const quienRegistraSelect = document.getElementById('quienRegistra');
-const dniCeInput = document.getElementById('dniCe');
-const dniList = document.getElementById('dni-list');
-const apellidosNombresInput = document.getElementById('apellidosNombres');
-const codigoInput = document.getElementById('codigo');
-const puestoInput = document.getElementById('puesto');
-const fechaInput = document.getElementById('fecha');
-const ingresoInput = document.getElementById('ingreso');
-const salidaInput = document.getElementById('salida');
-const observacionInput = document.getElementById('observacion');
-const horasExtrasForm = document.getElementById('horas-extras-form');
-const descargarHorasExtrasBtn = document.getElementById('descargarHorasExtrasBtn');
-const borrarRegistrosBtn = document.getElementById('borrarRegistrosBtn'); // NUEVA REFERENCIA AL BOTÓN
-const horasExtrasTableBody = document.querySelector('#horas-extras-table tbody');
+// --- Constantes para los índices de las columnas en el CSV ---
+const CSV_COLUMN_INDEX = {
+    JEFE_LIDER: 0, // Columna "JEFE (LIDER DEL CENTRO DE ARMADO)" donde está Nestor
+    JEFE_REGISTRA: 1, // Columna "JEFE QUE RIGISTRA LA NOVEDAD" para David, Oriol, y empleados a su cargo
+    APELLIDOS_NOMBRES: 2,
+    DNI_CE: 3,
+    CODIGO: 4,
+    PUESTO: 5
+};
 
 let trabajadoresMaestro = [];
-let horasExtrasRegistradas = [];
+let horasExtras = [];
+const CSV_PATH = 'assets/trabajadores_maestro.csv';
 
-// --- 3. Cargar el Archivo `trabajadores_maestro.csv` ---
-async function loadTrabajadoresMaestro() {
+// --- Elementos del DOM ---
+const horasExtrasForm = document.getElementById('horas-extras-form');
+const quienRegistraSelect = document.getElementById('quienRegistra');
+const apellidosNombresInputSearch = document.getElementById('apellidosNombresInputSearch');
+const dniCeInput = document.getElementById('dniCe');
+const codigoInput = document.getElementById('codigo');
+const puestoInput = document.getElementById('puesto');
+
+// --- Elementos de fecha y hora ---
+const fechaIngresoInput = document.getElementById('fechaIngreso');
+const ingresoInput = document.getElementById('ingreso');
+const fechaSalidaInput = document.getElementById('fechaSalida');
+const salidaInput = document.getElementById('salida');
+
+const observacionTextarea = document.getElementById('observacion');
+const descargarHorasExtrasBtn = document.getElementById('descargarHorasExtrasBtn');
+const borrarRegistrosBtn = document.getElementById('borrarRegistrosBtn');
+const nombresListDatalist = document.getElementById('nombres-list');
+
+// --- Nombres de los coordinadores que pueden registrar novedades ---
+// Se añaden explícitamente para asegurar que siempre estén en el select
+const COORDINADORES_QUE_REGISTRAN = [
+    "Nestor Jose Lopez Peraza - Supervisor Centros de Armado",
+    "Oriol Westreycher Flores - Coordinador Zona Centro y Sur",
+    "David Valencia Chinchay - Coordinador Zona Norte"
+];
+
+// --- Inicialización de la aplicación ---
+document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Cargar trabajadores del CSV
     try {
-        const response = await fetch('assets/trabajadores_maestro.csv');
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const csvText = await response.text();
-        trabajadoresMaestro = parseCSV(csvText);
+        const data = await cargarCSV(CSV_PATH);
+        trabajadoresMaestro = data.map(row => ({
+            jefeLider: row[CSV_COLUMN_INDEX.JEFE_LIDER],
+            jefeRegistra: row[CSV_COLUMN_INDEX.JEFE_REGISTRA],
+            apellidosNombres: row[CSV_COLUMN_INDEX.APELLIDOS_NOMBRES],
+            dniCe: row[CSV_COLUMN_INDEX.DNI_CE],
+            codigo: row[CSV_COLUMN_INDEX.CODIGO],
+            puesto: row[CSV_COLUMN_INDEX.PUESTO]
+        }));
         console.log('Trabajadores Maestro cargado:', trabajadoresMaestro);
+        poblarCoordinadoresEnSelect(); // Poblar el select de quién registra
 
-        populateDniDatalist();
     } catch (error) {
-        console.error('Error al cargar o parsear trabajadores_maestro.csv:', error);
-        alert('No se pudo cargar la lista de trabajadores. La función de autocompletado de DNI/CE podría no funcionar.');
+        console.error('Error al cargar el archivo CSV:', error);
+        alert('Error al cargar la base de datos de trabajadores. Asegúrate de que "trabajadores_maestro.csv" existe y está bien formateado.');
     }
-}
 
-function populateDniDatalist() {
-    dniList.innerHTML = '';
-    trabajadoresMaestro.forEach(trabajador => {
-        const option = document.createElement('option');
-        option.value = trabajador['DNI/CE']; // Acceso con corchetes
-        dniList.appendChild(option);
-    });
-}
+    // 2. Cargar horas extras guardadas
+    horasExtras = cargarDatos('horasExtrasData') || [];
+    console.log('Horas extras cargadas desde localStorage:', horasExtras);
+    renderizarTablaHorasExtras(horasExtras);
 
-// --- 4. Lógica de Autocompletado y Relleno Automático de Campos (basado en DNI/CE) ---
-dniCeInput.addEventListener('input', () => {
-    const inputValue = dniCeInput.value.trim();
-    const selectedTrabajador = trabajadoresMaestro.find(
-        t => t['DNI/CE'] === inputValue // Acceso con corchetes
-    );
-
-    if (selectedTrabajador) {
-        apellidosNombresInput.value = selectedTrabajador['APELLIDOS Y NOMBRES'] || ''; // Acceso con corchetes
-        codigoInput.value = selectedTrabajador['CODIGO'] || ''; // Acceso con corchetes
-        puestoInput.value = selectedTrabajador['PUESTO'] || ''; // Acceso con corchetes
-    } else {
-        apellidosNombresInput.value = '';
-        codigoInput.value = '';
-        puestoInput.value = '';
+    // 3. Configurar Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(registration => {
+                    console.log('Service Worker registrado con éxito:', registration);
+                })
+                .catch(error => {
+                    console.error('Fallo el registro del Service Worker:', error);
+                });
+        });
     }
+
+    // 4. Establecer la fecha actual por defecto en los campos de fecha
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    fechaIngresoInput.value = `${currentYear}-${mm}-${dd}`;
+    fechaSalidaInput.value = `${currentYear}-${mm}-${dd}`;
 });
 
-// --- 5. Manejo del Envío del Formulario (Registro de Horas Extras) ---
-horasExtrasForm.addEventListener('submit', (event) => {
-    event.preventDefault();
+// --- Funciones de Lógica de Negocio ---
 
-    if (!quienRegistraSelect.value) {
-        alert('Por favor, selecciona quién registra la novedad.');
-        quienRegistraSelect.focus();
-        return;
+/**
+ * Pobla el select de "quienRegistra" con los nombres de los coordinadores que pueden registrar.
+ */
+function poblarCoordinadoresEnSelect() {
+    const coordinadoresSet = new Set();
+
+    // 1. Añadir los coordinadores principales definidos en la constante (Nestor, Oriol, David)
+    COORDINADORES_QUE_REGISTRAN.forEach(coord => {
+        coordinadoresSet.add(coord);
+    });
+
+    // 2. Opcional: Si hay otros coordinadores en la columna JEFE_REGISTRA del CSV que no están en la lista fija,
+    //    también se pueden añadir aquí para que aparezcan.
+    trabajadoresMaestro.forEach(trabajador => {
+        if (trabajador.jefeRegistra && trabajador.jefeRegistra.trim() !== '') {
+            coordinadoresSet.add(trabajador.jefeRegistra.trim());
+        }
+    });
+
+    quienRegistraSelect.innerHTML = '<option value="">Seleccione...</option>'; // Limpiar y añadir opción por defecto
+
+    Array.from(coordinadoresSet).sort().forEach(coordinador => {
+        const option = document.createElement('option');
+        option.value = coordinador;
+        option.textContent = coordinador;
+        quienRegistraSelect.appendChild(option);
+    });
+
+    console.log('Coordinadores disponibles en el select:', Array.from(coordinadoresSet).sort());
+}
+
+
+/**
+ * Filtra los trabajadores maestros basándose en el coordinador seleccionado y el término de búsqueda por Apellidos y Nombres.
+ * @param {string} coordinadorSeleccionado - Nombre completo del coordinador seleccionado.
+ * @param {string} searchTerm - Término de búsqueda en Apellidos y Nombres.
+ * @returns {Array} - Lista de trabajadores filtrados.
+ */
+function filtrarTrabajadores(coordinadorSeleccionado, searchTerm) {
+    let filtered = trabajadoresMaestro; // Por defecto, el array completo de trabajadores
+
+    const NESTOR_SUPERVISOR = "Nestor Jose Lopez Peraza - Supervisor Centros de Armado";
+
+    if (coordinadorSeleccionado === NESTOR_SUPERVISOR) {
+        // Si el coordinador seleccionado es Nestor, ve a TODOS los trabajadores.
+        // No se aplica filtro adicional por la columna 'JEFE QUE RIGISTRA LA NOVEDAD'.
+    } else if (coordinadorSeleccionado && coordinadorSeleccionado !== '') {
+        // Para otros coordinadores (Oriol, David, etc.), se filtra por la columna 'JEFE QUE RIGISTRA LA NOVEDAD'.
+        filtered = filtered.filter(trabajador =>
+            trabajador.jefeRegistra && trabajador.jefeRegistra.trim() === coordinadorSeleccionado.trim()
+        );
+    } else {
+        // Si no hay coordinador seleccionado en "QUIÉN REGISTRA LA NOVEDAD?",
+        // la lista de "APELLIDOS Y NOMBRES" estará vacía.
+        return [];
     }
 
-    const selectedTrabajador = trabajadoresMaestro.find(
-        t => t['DNI/CE'] === dniCeInput.value.trim() // Acceso con corchetes
-    );
-
-    if (!selectedTrabajador) {
-        alert('Por favor, ingresa o selecciona un DNI/CE válido de la lista de trabajadores.');
-        dniCeInput.focus();
-        return;
+    // Aplicar filtro de búsqueda si hay un término (solo en Apellidos y Nombres)
+    if (searchTerm) {
+        const lowerCaseSearchTerm = searchTerm.toLowerCase();
+        filtered = filtered.filter(trabajador =>
+            (trabajador.apellidosNombres && trabajador.apellidosNombres.toLowerCase().includes(lowerCaseSearchTerm))
+        );
     }
 
-    const ingresoTime = ingresoInput.value;
-    const salidaTime = salidaInput.value;
+    return filtered;
+}
 
-    const parseTime = (timeStr) => {
-        const [hours, minutes] = timeStr.split(':').map(Number);
-        return hours * 60 + minutes;
-    };
 
-    if (salidaTime && ingresoTime && parseTime(salidaTime) <= parseTime(ingresoTime)) {
-        alert('La hora de salida debe ser posterior a la hora de ingreso.');
-        salidaInput.focus();
-        return;
-    }
+/**
+ * Actualiza la datalist de Apellidos y Nombres basándose en el coordinador seleccionado y el texto de búsqueda.
+ */
+function actualizarSugerenciasYCampos() {
+    const coordinadorSeleccionado = quienRegistraSelect.value;
+    const searchTerm = apellidosNombresInputSearch.value;
 
-    const newHoraExtra = {
-        quienRegistra: quienRegistraSelect.value,
-        dniCe: selectedTrabajador['DNI/CE'], // Acceso con corchetes
-        apellidosNombres: selectedTrabajador['APELLIDOS Y NOMBRES'], // Acceso con corchetes
-        codigo: selectedTrabajador['CODIGO'], // Acceso con corchetes
-        puesto: selectedTrabajador['PUESTO'], // Acceso con corchetes
-        fecha: fechaInput.value,
-        ingreso: ingresoInput.value,
-        salida: salidaInput.value,
-        observacion: observacionInput.value.trim()
-    };
-
-    horasExtrasRegistradas.push(newHoraExtra);
-    saveDataToLocalStorage('horasExtrasData', horasExtrasRegistradas);
-    console.log('Hora extra registrada:', newHoraExtra);
-    alert('¡Hora extra registrada con éxito!');
-
-    horasExtrasForm.reset();
-    apellidosNombresInput.value = '';
+    // Limpiar datalist y campos de autocompletado cada vez que se actualizan las sugerencias
+    nombresListDatalist.innerHTML = '';
+    dniCeInput.value = '';
     codigoInput.value = '';
     puestoInput.value = '';
 
-    renderHorasExtrasTable();
-});
-
-// --- 6. Cargar y Mostrar Registros Existentes al Inicio ---
-function loadAndRenderHorasExtras() {
-    const loadedData = loadDataFromLocalStorage('horasExtrasData');
-    if (loadedData) {
-        horasExtrasRegistradas = loadedData;
-        console.log('Horas extras cargadas desde localStorage:', horasExtrasRegistradas);
-    }
-    renderHorasExtrasTable();
-}
-
-function renderHorasExtrasTable() {
-    horasExtrasTableBody.innerHTML = '';
-
-    if (horasExtrasRegistradas.length === 0) {
-        const noDataRow = document.createElement('tr');
-        noDataRow.innerHTML = '<td colspan="9" style="text-align: center; color: #777;">No hay horas extras registradas aún.</td>';
-        horasExtrasTableBody.appendChild(noDataRow);
+    if (!coordinadorSeleccionado) {
+        apellidosNombresInputSearch.placeholder = "Seleccione un coordinador primero...";
+        apellidosNombresInputSearch.disabled = true;
         return;
+    } else {
+        apellidosNombresInputSearch.placeholder = "Empieza a escribir los Apellidos y Nombres del trabajador...";
+        apellidosNombresInputSearch.disabled = false;
     }
 
-    horasExtrasRegistradas.forEach(hora => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${hora.quienRegistra}</td>
-            <td>${hora.dniCe}</td>
-            <td>${hora.apellidosNombres}</td>
-            <td>${hora.codigo}</td>
-            <td>${hora.puesto}</td>
-            <td>${hora.fecha}</td>
-            <td>${hora.ingreso}</td>
-            <td>${hora.salida}</td>
-            <td>${hora.observacion || '-'}</td>
-        `;
-        horasExtrasTableBody.appendChild(row);
+    const filteredTrabajadores = filtrarTrabajadores(coordinadorSeleccionado, searchTerm);
+
+    // Poblar datalist con los Apellidos y Nombres de los trabajadores filtrados
+    filteredTrabajadores.forEach(trabajador => {
+        if (trabajador.apellidosNombres) {
+            const option = document.createElement('option');
+            option.value = trabajador.apellidosNombres;
+            option.textContent = `${trabajador.apellidosNombres} (DNI: ${trabajador.dniCe})`;
+            nombresListDatalist.appendChild(option);
+        }
     });
+
+    // Autocompletar los campos si el término de búsqueda coincide exactamente con un Apellidos y Nombres filtrado
+    const exactMatch = filteredTrabajadores.find(trabajador =>
+        (trabajador.apellidosNombres && trabajador.apellidosNombres.toLowerCase() === searchTerm.toLowerCase())
+    );
+
+    if (exactMatch) {
+        apellidosNombresInputSearch.value = exactMatch.apellidosNombres;
+        dniCeInput.value = exactMatch.dniCe;
+        codigoInput.value = exactMatch.codigo;
+        puestoInput.value = exactMatch.puesto;
+    }
 }
 
-// --- 7. Lógica del Botón de Descarga de CSV ---
-descargarHorasExtrasBtn.addEventListener('click', () => {
-    if (horasExtrasRegistradas.length === 0) {
-        alert('No hay horas extras para descargar.');
+
+/**
+ * Busca un trabajador por su Apellidos y Nombres exactos
+ * dentro de los trabajadores filtrados por el coordinador.
+ * Se usa cuando el usuario selecciona una sugerencia o termina de escribir.
+ * @param {string} nombreCompletoValue - El valor introducido (Apellidos y Nombres).
+ * @param {string} coordinadorSeleccionado - El coordinador actualmente seleccionado.
+ */
+function buscarYAutocompletarTrabajador(nombreCompletoValue, coordinadorSeleccionado) {
+    const lowerCaseNombreCompletoValue = nombreCompletoValue.toLowerCase();
+    const filteredTrabajadores = filtrarTrabajadores(coordinadorSeleccionado, '');
+
+    const foundTrabajador = filteredTrabajadores.find(trabajador =>
+        (trabajador.apellidosNombres && trabajador.apellidosNombres.toLowerCase() === lowerCaseNombreCompletoValue)
+    );
+
+    if (foundTrabajador) {
+        apellidosNombresInputSearch.value = foundTrabajador.apellidosNombres;
+        dniCeInput.value = foundTrabajador.dniCe;
+        codigoInput.value = foundTrabajador.codigo;
+        puestoInput.value = foundTrabajador.puesto;
+    } else {
+        dniCeInput.value = '';
+        codigoInput.value = '';
+        puestoInput.value = '';
+    }
+}
+
+
+// --- Event Listeners ---
+
+// Cuando cambia el coordinador en el select "¿QUIÉN REGISTRA LA NOVEDAD?"
+quienRegistraSelect.addEventListener('change', () => {
+    actualizarSugerenciasYCampos();
+    apellidosNombresInputSearch.value = '';
+    dniCeInput.value = '';
+    codigoInput.value = '';
+    puestoInput.value = '';
+});
+
+// Cuando el usuario escribe en el campo de búsqueda de "APELLIDOS Y NOMBRES"
+apellidosNombresInputSearch.addEventListener('input', () => {
+    actualizarSugerenciasYCampos();
+});
+
+// Cuando el usuario selecciona una sugerencia de la datalist o sale del campo de "APELLIDOS Y NOMBRES"
+apellidosNombresInputSearch.addEventListener('change', (event) => {
+    const coordinadorSeleccionado = quienRegistraSelect.value;
+    buscarYAutocompletarTrabajador(event.target.value, coordinadorSeleccionado);
+});
+
+
+// Manejar el envío del formulario de registro de horas extras
+horasExtrasForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    if (!apellidosNombresInputSearch.value || !dniCeInput.value || !codigoInput.value || !puestoInput.value) {
+        alert('Por favor, selecciona un trabajador válido de la lista de sugerencias o asegúrate de que todos los campos del trabajador estén autocompletados (Apellidos y Nombres, DNI/CE, Código, Puesto).');
+        return;
+    }
+    
+    // Validar que las fechas y horas sean válidas y coherentes
+    const fechaIngresoVal = new Date(fechaIngresoInput.value);
+    const fechaSalidaVal = new Date(fechaSalidaInput.value);
+
+    // Obtener horas y minutos
+    const [hIngreso, mIngreso] = ingresoInput.value.split(':').map(Number);
+    const [hSalida, mSalida] = salidaInput.value.split(':').map(Number);
+
+    // Crear objetos Date completos para una comparación precisa
+    const momentoIngreso = new Date(fechaIngresoVal.getFullYear(), fechaIngresoVal.getMonth(), fechaIngresoVal.getDate(), hIngreso, mIngreso);
+    const momentoSalida = new Date(fechaSalidaVal.getFullYear(), fechaSalidaVal.getMonth(), fechaSalidaVal.getDate(), hSalida, mSalida);
+
+    if (momentoSalida <= momentoIngreso) {
+        alert('La fecha y hora de SALIDA deben ser posteriores a la fecha y hora de INGRESO.');
         return;
     }
 
-    const objectKeys = [
-        "quienRegistra",
-        "dniCe",
-        "apellidosNombres",
-        "codigo",
-        "puesto",
-        "fecha",
-        "ingreso",
-        "salida",
-        "observacion"
-    ];
+    const nuevaHoraExtra = {
+        quienRegistra: quienRegistraSelect.value,
+        dniCe: dniCeInput.value,
+        apellidosNombres: apellidosNombresInputSearch.value,
+        codigo: codigoInput.value,
+        puesto: puestoInput.value,
+        fechaIngreso: fechaIngresoInput.value,
+        ingreso: ingresoInput.value,
+        fechaSalida: fechaSalidaInput.value,
+        salida: salidaInput.value,
+        observacion: observacionTextarea.value || 'N/A'
+    };
 
-    const displayHeaders = [
-        "QUIEN REGISTRA LA NOVEDAD",
-        "DNI/CE",
-        "APELLIDOS Y NOMBRES",
-        "CODIGO",
-        "PUESTO",
-        "Fecha",
-        "INGRESO",
-        "SALIDA",
-        "OBSERVACION DE LA NOVEDAD"
-    ];
+    horasExtras.push(nuevaHoraExtra);
+    guardarDatos('horasExtrasData', horasExtras);
+    renderizarTablaHorasExtras(horasExtras);
+    horasExtrasForm.reset();
 
-    const contenidoCSV = convertToCSV(horasExtrasRegistradas, objectKeys, displayHeaders);
-    const filename = `informe_horas_extras_${new Date().toISOString().slice(0, 10)}.csv`;
-    downloadCSV(contenidoCSV, filename);
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    fechaIngresoInput.value = `${currentYear}-${mm}-${dd}`;
+    fechaSalidaInput.value = `${currentYear}-${mm}-${dd}`;
+
+    apellidosNombresInputSearch.value = '';
+    dniCeInput.value = '';
+    codigoInput.value = '';
+    puestoInput.value = '';
+
+    console.log('Hora extra registrada:', nuevaHoraExtra);
+    alert('Hora extra registrada con éxito!');
 });
 
-// --- 8. Lógica del Botón Borrar Registros (NUEVO) ---
-borrarRegistrosBtn.addEventListener('click', () => {
-    const confirmDelete = confirm('¿Estás seguro de que deseas borrar TODOS los registros de horas extras? Esta acción es irreversible.');
+// Evento para descargar el informe Excel
+descargarHorasExtrasBtn.addEventListener('click', () => {
+    if (horasExtras.length === 0) {
+        alert('No hay registros de horas extras para descargar.');
+        return;
+    }
 
-    if (confirmDelete) {
-        localStorage.removeItem('horasExtrasData'); // Borra los datos del localStorage
-        horasExtrasRegistradas = []; // Vacía el array en memoria
-        renderHorasExtrasTable(); // Actualiza la tabla para que se vea vacía
+    // Definir los encabezados del archivo Excel
+    const headers = [
+        'Quién Registra', 'DNI/CE', 'Apellidos y Nombres', 'Código', 'Puesto',
+        'Fecha Ingreso', 'Hora Ingreso', 'Fecha Salida', 'Hora Salida', 'Observación'
+    ];
+
+    // Mapear los datos de las horas extras a un array de arrays para SheetJS
+    const dataForExcel = [headers]; // La primera fila es el encabezado
+    horasExtras.forEach(he => {
+        dataForExcel.push([
+            he.quienRegistra,
+            he.dniCe,
+            he.apellidosNombres,
+            he.codigo,
+            he.puesto,
+            he.fechaIngreso,
+            he.ingreso,
+            he.fechaSalida,
+            he.salida,
+            he.observacion
+        ]);
+    });
+
+    // Crear una hoja de trabajo (worksheet) a partir del array de arrays
+    const ws = XLSX.utils.aoa_to_sheet(dataForExcel);
+
+    // Crear un libro de trabajo (workbook)
+    const wb = XLSX.utils.book_new();
+    // Añadir la hoja de trabajo al libro con un nombre
+    XLSX.utils.book_append_sheet(wb, ws, "Reporte Horas Extras");
+
+    // Generar el nombre del archivo
+    const filename = `informe_horas_extras_${new Date().toISOString().slice(0, 10)}.xlsx`;
+
+    // Escribir el libro de trabajo a un archivo y descargarlo
+    XLSX.writeFile(wb, filename);
+});
+
+// Evento para borrar todos los registros de horas extras del localStorage
+borrarRegistrosBtn.addEventListener('click', () => {
+    if (confirm('¿Estás seguro de que deseas borrar TODOS los registros de horas extras? Esta acción es irreversible.')) {
+        localStorage.removeItem('horasExtrasData');
+        horasExtras = [];
+        renderizarTablaHorasExtras(horasExtras);
         alert('Todos los registros de horas extras han sido borrados.');
     }
-});
-
-// --- 9. Inicialización de la Aplicación ---
-document.addEventListener('DOMContentLoaded', () => {
-    loadTrabajadoresMaestro();
-    loadAndRenderHorasExtras();
 });
