@@ -1,356 +1,532 @@
-/* style.css */
+/* Importar una fuente moderna de Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap');
 
-/* Variables CSS para colores - esto facilita cambiar el tema más adelante */
 :root {
-    --primary-color: #007bff; /* Azul vibrante */
-    --secondary-color: #6c757d; /* Gris para texto secundario */
-    --accent-color: #28a745; /* Verde para acciones primarias */
-    --danger-color: #dc3545; /* Rojo para acciones peligrosas */
-    --bg-light: #f8f9fa; /* Fondo claro */
-    --border-color: #ced4da;
-    --shadow-color: rgba(0, 0, 0, 0.1);
-    --icon-color: #007bff; /* Color para los nuevos iconos (azul primario) */
+    /* Paleta de colores más moderna y vibrante */
+    --primary-color: #2F80ED; /* Azul principal */
+    --secondary-color: #27AE60; /* Verde para éxito/añadir */
+    --accent-color: #F2994A; /* Naranja cálido */
+    --text-color: #333;
+    --light-text-color: #555;
+    --background-color: #F8F9FA; /* Fondo muy claro */
+    --card-background: #FFFFFF;
+    --border-color: #E0E0E0;
+    --hover-primary: #216EDB; /* Azul más oscuro para hover */
+    --hover-secondary: #219B52; /* Verde más oscuro para hover */
+    --delete-color: #EB5757; /* Rojo para eliminar */
+    --hover-delete: #CC4C4C;
+    --success-message: #28A745; /* Verde para mensajes de éxito */
+    --error-message: #DC3545; /* Rojo para mensajes de error */
+    --warning-message: #FFC107; /* Amarillo para advertencias */
+
+    /* Espaciado, sombras y bordes */
+    --spacing-unit: 1rem;
+    --border-radius: 12px; /* Bordes más redondeados */
+    --button-border-radius: 8px; /* Ligeramente menos redondeado para botones */
+    --box-shadow-light: 0 4px 10px rgba(0, 0, 0, 0.05);
+    --box-shadow-medium: 0 8px 20px rgba(0, 0, 0, 0.08);
+    --transition-speed: 0.3s ease;
 }
 
-body {
-    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+/* Reset básico y estilos globales */
+* {
     margin: 0;
     padding: 0;
-    background-color: var(--bg-light);
-    color: #343a40; /* Texto oscuro */
-    line-height: 1.6;
-}
-
-header {
-    background-color: var(--primary-color);
-    color: white;
-    padding: 1.5em 0;
-    text-align: center;
-    box-shadow: 0 4px 6px var(--shadow-color);
-    margin-bottom: 30px;
-}
-
-h1 {
-    font-size: 2.5em;
-    margin: 0;
-    font-weight: 600;
-}
-
-main {
-    padding: 20px;
-    max-width: 1200px;
-    margin: 20px auto;
-    background-color: #fff;
-    border-radius: 12px; /* Bordes más suaves */
-    box-shadow: 0 4px 12px var(--shadow-color);
-}
-
-section {
-    margin-bottom: 40px;
-    padding: 25px;
-    border: 1px solid #e9ecef;
-    border-radius: 10px;
-    background-color: #fff;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-}
-
-h2 {
-    color: var(--primary-color);
-    text-align: center;
-    margin-bottom: 25px;
-    font-size: 2em;
-    font-weight: 500;
-    border-bottom: 2px solid var(--primary-color);
-    padding-bottom: 10px;
-    display: inline-block; /* Para que la línea se ajuste al texto */
-    width: auto;
-    max-width: 100%;
     box-sizing: border-box;
 }
 
-/* Estilos mejorados para los grupos de formulario e inputs */
+body {
+    font-family: 'Open Sans', sans-serif; /* Fuente legible para el cuerpo */
+    line-height: 1.6;
+    color: var(--text-color);
+    background-color: var(--background-color);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column; /* Asegura un flujo vertical principal */
+}
+
+header {
+    background: linear-gradient(to right, var(--primary-color), #4A90E2); /* Degradado suave */
+    color: #fff;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    box-shadow: var(--box-shadow-medium);
+    z-index: 100; /* Asegura que esté por encima de otros elementos */
+    position: sticky; /* Sticky header para apps */
+    top: 0;
+}
+
+header h1 {
+    margin: 0;
+    font-family: 'Montserrat', sans-serif; /* Fuente más destacada para títulos */
+    font-size: 1.8rem; /* Tamaño para móvil */
+    font-weight: 700;
+}
+
+main {
+    flex-grow: 1;
+    padding: 1.5rem 1rem; /* Más padding para móvil */
+    display: flex;
+    flex-direction: column; /* Fuerza el apilamiento vertical de secciones */
+    gap: 1.5rem; /* Espacio entre secciones */
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    display: flex; /* Usamos flex para apilar secciones en móvil */
+    flex-direction: column; /* Asegura que las tarjetas se apilen verticalmente */
+    gap: 1.5rem;
+}
+
+/* En pantallas de escritorio, usa grid para un layout de 2 columnas */
+@media (min-width: 992px) {
+    .container {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr; /* Dos columnas: formulario más pequeño, reporte más grande */
+        gap: 2.5rem; /* Espacio entre columnas */
+        /* Flex direction no es necesario aquí porque Grid se encarga del layout */
+    }
+    /* Asegurarse de que las secciones se coloquen correctamente en el grid */
+    #register-novelty-section {
+        grid-column: 1 / 2;
+    }
+    .floating-action-buttons {
+        grid-column: 1 / 2; /* Mantener los botones bajo el formulario */
+        margin-top: 0; /* No flotante en desktop */
+        position: static; /* Quitar el posicionamiento fijo en desktop */
+        flex-direction: row; /* En fila en desktop */
+        justify-content: flex-start;
+        max-width: none;
+        padding: 0;
+    }
+    #report-section {
+        grid-column: 2 / 3;
+    }
+}
+
+
+/* Estilos de tarjeta (card) */
+.card {
+    background-color: var(--card-background);
+    padding: 1.8rem; /* Padding generoso */
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow-light);
+    transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.card:hover {
+    transform: translateY(-5px); /* Efecto más pronunciado al hacer hover */
+    box-shadow: var(--box-shadow-medium);
+}
+
+.form-section h2,
+.report-section h2 {
+    color: var(--primary-color);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.6rem;
+    margin-bottom: 1.2rem;
+    font-weight: 600;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.8rem;
+}
+
+/* Estilos de formularios */
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 1.2rem;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 0.6rem;
     font-weight: 600;
-    color: #495057;
+    color: var(--light-text-color);
+    font-size: 0.9rem;
 }
 
-/* Estilos para todos los inputs de texto, select y textarea */
 .form-group input[type="text"],
-.form-group textarea,
-.form-group select { /* APLICADO A SELECT TAMBIÉN */
-    width: calc(100% - 24px); /* Ancho completo menos padding y borde */
-    padding: 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px; /* Bordes más suaves */
-    font-size: 1em;
-    background-color: #fff;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,.075);
-    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-
-/* Estilos específicos para inputs de fecha y hora */
 .form-group input[type="date"],
-.form-group input[type="time"] {
-    width: calc(100% - 45px); /* Ajustado para el nuevo padding-right del icono */
-    padding: 12px;
-    padding-right: 38px; /* Espacio extra para el icono */
+.form-group input[type="time"],
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.9rem 1.2rem; /* Mayor padding para interacción táctil */
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    font-size: 1em;
-    background-color: #fff;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,.075);
-    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    /* Ocultar el icono nativo de calendario/reloj de los navegadores */
-    -webkit-appearance: none; /* Chrome, Safari, Opera */
-    -moz-appearance: none;    /* Firefox */
-    appearance: none;         /* Estándar */
-    /* Eliminar la flecha de la lista desplegable (si la hay) */
-    background-repeat: no-repeat;
-    background-position: right 10px center; /* Posición del nuevo icono */
-    background-size: 24px; /* Tamaño más grande para el icono */
-    cursor: pointer; /* Indica que es clickeable para abrir el picker */
-}
-
-/* Icono de calendario moderno para input[type="date"] */
-.form-group input[type="date"] {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23007bff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
-}
-
-/* Icono de reloj moderno para input[type="time"] */
-.form-group input[type="time"] {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23007bff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpolyline points='12 6 12 12 16 14'%3E%3C/polyline%3E%3C/svg%3E");
-}
-
-
-/* Estilos para el SELECT para darle un aspecto más moderno */
-.form-group select {
-    /* Ocultar flecha nativa en algunos navegadores */
-    -webkit-appearance: none;
-    -moz-appearance: none;
+    border-radius: var(--button-border-radius); /* Coherente con botones */
+    font-size: 1rem;
+    color: var(--text-color);
+    background-color: #fcfcfc;
+    transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+    -webkit-appearance: none; /* Para iOS, elimina estilos predeterminados */
+    -moz-appearance: none; /* Para Firefox */
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23007bff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 20px; /* Tamaño del icono de flecha */
-    padding-right: 35px; /* Espacio para el icono de flecha */
-    cursor: pointer;
 }
 
-
-/* Foco en los inputs */
-.form-group input:focus,
+.form-group input[type="text"]:focus,
+.form-group input[type="date"]:focus,
+.form-group input[type="time"]:focus,
 .form-group select:focus,
 .form-group textarea:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    box-shadow: 0 0 0 4px rgba(47, 128, 237, 0.2); /* Sombra más pronunciada al enfocar */
     outline: none;
 }
 
-.form-group input[readonly] {
-    background-color: #e9ecef;
-    cursor: default;
+.form-group input[type="text"][readonly],
+.form-group input[type="text"][disabled] {
+    background-color: #EFEFEF;
+    cursor: not-allowed;
     opacity: 0.8;
 }
 
-
-/* Estilos para los botones */
-button {
-    background-color: var(--accent-color); /* Verde para el botón principal */
-    color: white;
-    padding: 12px 25px; /* Más padding para botones */
-    border: none;
-    border-radius: 6px; /* Bordes más suaves */
-    cursor: pointer;
-    font-size: 1.1em;
-    font-weight: 500;
-    transition: background-color 0.2s ease-in-out, transform 0.1s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-button:hover {
-    background-color: #218838; /* Verde más oscuro */
-    transform: translateY(-1px); /* Efecto ligero al pasar el ratón */
-}
-
-button:active {
-    transform: translateY(0);
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-
-/* Estilos específicos para la sección de reporte */
-#report-section {
-    margin-top: 50px;
-}
-
-.table-container {
-    overflow-x: auto;
-    margin-top: 25px;
-    border-radius: 8px; /* Bordes suaves para la tabla */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-#horas-extras-table {
+/* Estilos de botones generales */
+.submit-button,
+.add-new-button,
+.delete-button,
+.download-button,
+.clear-button,
+.delete-row-button,
+.delete-confirm-button {
+    display: block; /* Ocupan todo el ancho en móvil */
     width: 100%;
-    border-collapse: collapse;
-    min-width: 700px; /* Asegura que la tabla no sea demasiado estrecha */
+    padding: 1rem 1.5rem; /* Botones más grandes para táctil */
+    border: none;
+    border-radius: var(--button-border-radius);
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    transition: background-color var(--transition-speed), transform 0.2s ease, box-shadow var(--transition-speed);
+    text-align: center;
+    text-decoration: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2); /* Sombra más pronunciada para botones */
 }
 
-#horas-extras-table th,
-#horas-extras-table td {
-    border: 1px solid #dee2e6; /* Bordes de tabla más suaves */
-    padding: 12px 15px; /* Más padding en celdas */
+.submit-button {
+    background-color: var(--primary-color);
+    margin-top: 2rem; /* Más espacio superior */
+}
+
+.submit-button:hover {
+    background-color: var(--hover-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+}
+
+/* Botones flotantes (Add/Delete Colaborador) */
+.floating-action-buttons {
+    display: flex;
+    flex-direction: column; /* Apilados en móvil */
+    gap: 1rem;
+    margin-top: 1rem; /* Espacio después del formulario */
+    /* Posicionamiento fijo para móvil */
+    position: sticky;
+    bottom: 1rem; /* Más arriba para no chocar con el borde */
+    width: 100%;
+    z-index: 50; /* Por encima de la tabla, pero debajo de modales */
+    align-self: center; /* Centrar en el contenedor flex */
+    max-width: 500px; /* Limitar ancho para móvil */
+    padding: 0 1rem; /* Padding lateral si se sale del container */
+    left: 0; /* Asegura que no se mueva lateralmente */
+    right: 0;
+    margin-left: auto; /* Para centrar si no ocupa 100% */
+    margin-right: auto;
+}
+
+.add-new-button {
+    background-color: var(--secondary-color); /* Color verde vibrante */
+}
+
+.add-new-button:hover {
+    background-color: var(--hover-secondary);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+}
+
+.delete-button {
+    background-color: var(--delete-color); /* Color rojo vibrante */
+}
+
+.delete-button:hover {
+    background-color: var(--hover-delete);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+}
+
+/* Botones específicos del reporte */
+.report-actions {
+    display: flex;
+    flex-wrap: wrap; /* Permite que los botones salten de línea si no caben */
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    justify-content: center; /* **CENTRADO EN MÓVIL** */
+}
+@media (min-width: 768px) {
+    .report-actions {
+        justify-content: flex-end; /* A la derecha en tablet/desktop */
+    }
+}
+
+
+.download-button {
+    background-color: var(--primary-color);
+    width: auto; /* Importante para que no ocupe todo el ancho */
+    padding: 0.9rem 1.5rem; /* Ajuste para que se vea bien junto al otro */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+.download-button:hover {
+    background-color: var(--hover-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+}
+
+.clear-button {
+    background-color: var(--accent-color); /* Color naranja para borrar todos */
+    width: auto; /* Importante para que no ocupe todo el ancho */
+    padding: 0.9rem 1.5rem; /* Ajuste para que se vea bien junto al otro */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+.clear-button:hover {
+    background-color: #D6783B; /* Tono más oscuro de naranja */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+}
+
+
+/* Estilos de la tabla */
+.table-container {
+    overflow-x: auto; /* PERMITE SCROLL HORIZONTAL SOLO EN LA TABLA */
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow-light);
+    background-color: var(--card-background);
+}
+
+#horasExtrasTable {
+    width: 100%; /* La tabla ocupa todo el ancho de su contenedor */
+    border-collapse: collapse;
+    min-width: 700px; /* Asegura que la tabla tenga un ancho mínimo para activar el scroll horizontal */
+}
+
+#horasExtrasTable thead {
+    background-color: var(--primary-color);
+    color: #fff;
+}
+
+#horasExtrasTable th {
+    padding: 0.8rem 0.7rem; /* Ajustar padding para que sea más compacto */
     text-align: left;
+    font-weight: 600;
+    font-size: 0.8rem; /* Reducir un poco el tamaño de fuente */
     white-space: nowrap;
 }
 
-#horas-extras-table thead th {
-    background-color: #e9ecef; /* Fondo para encabezados */
-    color: #495057;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.9em;
-    border-bottom: 2px solid #dee2e6;
+#horasExtrasTable tbody tr {
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color var(--transition-speed);
 }
 
-#horas-extras-table tbody tr:nth-child(even) {
-    background-color: #f8f9fa; /* Color de fila par */
+#horasExtrasTable tbody tr:nth-child(even) {
+    background-color: #FDFDFD; /* Alterna colores de fila */
 }
 
-#horas-extras-table tbody tr:hover {
-    background-color: #e2f0fd; /* Resaltar fila al pasar el ratón */
+#horasExtrasTable tbody tr:hover {
+    background-color: #EBF5FB;
 }
 
-footer {
-    text-align: center;
-    padding: 25px;
-    margin-top: 50px;
-    color: #6c757d;
-    font-size: 0.85em;
-    background-color: #e9ecef;
-    border-top: 1px solid #dee2e6;
-    border-radius: 0 0 12px 12px; /* Bordes inferiores del main */
+#horasExtrasTable td {
+    padding: 0.7rem 0.7rem; /* Ajustar padding para que sea más compacto */
+    font-size: 0.75rem; /* Reducir un poco el tamaño de fuente */
+    color: var(--text-color);
+    vertical-align: middle;
+    white-space: nowrap;
 }
 
-/* Estilos para el grupo de botones y el botón de reset */
-.button-group {
-    margin-top: 30px;
+.delete-row-button {
+    background-color: var(--delete-color); /* Color rojo fuerte */
+    padding: 0.5rem 0.9rem; /* Un poco más grande para táctil */
+    font-size: 0.75rem; /* Tamaño de fuente para que quepa */
+    border-radius: 5px; /* Bordes ligeramente menos redondeados */
+    display: inline-block; /* Para que estén uno al lado del otro en la celda */
+    width: auto; /* No ocupa todo el ancho */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15); /* Sombra para resaltar */
+}
+
+.delete-row-button:hover {
+    background-color: var(--hover-delete);
+    transform: scale(1.05);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+}
+
+/* Estilos para el botón "Eliminar Seleccionado" dentro del modal */
+.delete-confirm-button {
+    background-color: var(--delete-color); /* Asegura el color rojo */
+    margin-top: 1.5rem; /* Espacio superior para separarlo del select */
+}
+
+.delete-confirm-button:hover {
+    background-color: var(--hover-delete);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+}
+
+/* Estilos de los modales */
+.modal {
+    display: none; /* Oculto por defecto */
+    position: fixed;
+    z-index: 2000; /* Asegura que esté por encima de todo */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.7); /* Fondo más oscuro */
+    backdrop-filter: blur(8px); /* Más desenfoque */
     display: flex;
-    gap: 15px; /* Más espacio entre los botones */
     justify-content: center;
-    flex-wrap: wrap;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
 }
 
-.button-group button {
+.modal.active {
+    display: flex;
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background-color: var(--card-background);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow-medium);
+    position: relative;
+    max-width: 90%; /* Ajuste para móvil */
+    width: 500px; /* Ancho máximo para desktop */
+    transform: translateY(-30px); /* Efecto de entrada más pronunciado */
+    transition: transform 0.4s ease, opacity 0.4s ease;
+}
+
+.modal.active .modal-content {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.modal-close-button {
+    color: var(--light-text-color);
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 2rem; /* Más grande para táctil */
+    font-weight: bold;
+    cursor: pointer;
+    transition: color var(--transition-speed);
+}
+
+.modal-close-button:hover,
+.modal-close-button:focus {
+    color: var(--delete-color);
+    text-decoration: none;
+}
+
+.modal-content h3 {
+    color: var(--primary-color);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.8rem;
+}
+
+.modal-content p {
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+    font-size: 1rem;
+}
+
+/* Estilos para el botón OK del modal de mensajes */
+#messageModalOkButton {
+    background-color: var(--primary-color); /* Por defecto */
     width: auto;
-    flex-grow: 1;
-    margin-top: 0;
-    padding: 10px 20px; /* Ajuste el padding para los botones de acción secundarios */
-    font-size: 1em;
+    margin: 1rem auto 0; /* Margen superior y centrado */
+    display: block;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
 }
 
-.reset-button {
-    background-color: var(--danger-color); /* Rojo definido en variables */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+#messageModalOkButton:hover {
+    background-color: var(--hover-primary);
 }
 
-.reset-button:hover {
-    background-color: #c82333; /* Rojo más oscuro al pasar el ratón */
+/* Colores de título del modal de mensajes según el tipo */
+.modal-title-error { color: var(--error-message); }
+.modal-title-success { color: var(--success-message); }
+.modal-title-warning { color: var(--warning-message); }
+.modal-title-info { color: var(--primary-color); }
+
+/* Footer */
+footer {
+    background-color: var(--primary-color); /* Fondo del footer con color primario */
+    color: #fff;
+    text-align: center;
+    padding: 1rem 0; /* Menos padding para móvil */
+    margin-top: 2rem;
+    font-size: 0.85rem;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05); /* Sombra sutil hacia arriba */
 }
 
-/* Media Queries para responsividad */
-@media (max-width: 992px) {
-    h1 {
-        font-size: 2em;
+/* Media Queries para responsividad (Sobreescriben para pantallas más grandes) */
+@media (min-width: 768px) {
+    header h1 {
+        font-size: 2.2rem;
     }
-    h2 {
-        font-size: 1.8em;
-    }
+
     main {
-        margin: 15px;
-        padding: 15px;
+        padding: 2rem 1.5rem;
+        gap: 2rem;
     }
-    section {
-        padding: 20px;
-    }
-    .form-group input, .form-group select, .form-group textarea {
-        width: calc(100% - 20px);
-    }
-    button {
-        padding: 10px 20px;
-        font-size: 1em;
-    }
-}
 
-@media (max-width: 768px) {
-    h1 {
-        font-size: 1.8em;
+    .card {
+        padding: 2.5rem; /* Más padding en pantallas más grandes */
     }
-    h2 {
-        font-size: 1.6em;
-    }
-    main {
-        margin: 10px;
-        padding: 10px;
-    }
-    section {
-        padding: 15px;
-    }
-    .form-group input, .form-group select, .form-group textarea {
-        width: calc(100% - 16px); /* Más ajuste para padding */
-        padding: 10px;
-        font-size: 0.95em;
-    }
-    /* Asegurar que el padding-right sea suficiente para el icono en móviles */
-    .form-group input[type="date"],
-    .form-group input[type="time"] {
-        padding-right: 32px; /* Ajuste para móviles */
-    }
-    button {
-        padding: 8px 15px;
-        font-size: 0.95em;
-    }
-    #horas-extras-table th, #horas-extras-table td {
-        padding: 8px 10px;
-        font-size: 0.85em;
-    }
-    .button-group {
-        flex-direction: column;
-        gap: 10px;
-    }
-    .button-group button {
-        width: 100%;
-        margin-bottom: 0;
-    }
-    .reset-button {
-        font-size: 0.95em;
-    }
-}
 
-@media (max-width: 480px) {
-    h1 {
-        font-size: 1.5em;
+    .form-section h2,
+    .report-section h2 {
+        font-size: 2rem;
     }
-    h2 {
-        font-size: 1.3em;
-    }
+
     .form-group label {
-        font-size: 0.9em;
+        font-size: 1rem;
     }
-    .form-group input, .form-group select, .form-group textarea {
-        font-size: 0.9em;
+
+    .submit-button {
+        width: auto; /* Ancho automático en desktop */
+        align-self: flex-end; /* Alinearlo a la derecha si es parte de un flex */
     }
-    button {
-        font-size: 0.9em;
+
+    .report-actions {
+        justify-content: flex-end; /* Alinea a la derecha en desktop */
     }
-    #horas-extras-table th, #horas-extras-table td {
-        font-size: 0.8em;
-        padding: 6px 8px;
+
+    .download-button,
+    .clear-button {
+        width: auto;
+    }
+
+    #horasExtrasTable th,
+    #horasExtrasTable td {
+        padding: 1rem 1.2rem;
+        font-size: 0.9rem;
+    }
+
+    .delete-row-button {
+        padding: 0.7rem 1.2rem;
+        font-size: 0.9rem;
+    }
+
+    .modal-content {
+        max-width: 600px; /* Ancho del modal en desktop */
     }
 }
